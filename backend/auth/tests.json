@@ -1,0 +1,32 @@
+{
+  "tests": [
+    {
+      "name": "Register user",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "register",
+        "email": "test_nm@example.com",
+        "password": "testpass123",
+        "username": "ТестПользователь",
+        "security_question": "Имя вашего питомца?",
+        "security_answer": "Барсик"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"token": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get security question after registration",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "get_security_question",
+        "email": "test_nm@example.com"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"security_question": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

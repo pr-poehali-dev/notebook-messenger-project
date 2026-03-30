@@ -1,14 +1,42 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect } from "react";
+import AuthPage from "@/components/messenger/AuthPage";
+import MessengerApp from "@/components/messenger/MessengerApp";
+import { getUser, clearUser } from "@/lib/store";
+import { api } from "@/lib/api";
 
-const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4 color-black text-black">Добро пожаловать!</h1>
-        <p className="text-xl text-gray-600">тут будет отображаться ваш проект</p>
+export default function Index() {
+  const [user, setUser] = useState<{ user_id: number; username: string; email: string; token: string; security_question?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const stored = getUser();
+    if (stored) {
+      api.auth.verifyToken(stored.token).then((res) => {
+        if (res.user_id) {
+          setUser({ ...stored, ...res });
+        } else {
+          clearUser();
+        }
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="handwritten text-2xl" style={{ color: 'var(--ink-faded)' }}>
+          Загрузка дневника...
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
 
-export default Index;
+  if (!user) {
+    return <AuthPage onLogin={setUser} />;
+  }
+
+  return <MessengerApp user={user} onLogout={() => { clearUser(); setUser(null); }} />;
+}

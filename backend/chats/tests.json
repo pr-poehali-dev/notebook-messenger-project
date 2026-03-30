@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "List chats without token",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "list",
+        "token": "invalid_token"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
