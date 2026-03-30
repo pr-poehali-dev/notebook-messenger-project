@@ -63,7 +63,7 @@ export default function SettingsPanel({ user }: Props) {
   ];
 
   return (
-    <div className="flex-1 p-6 overflow-y-auto" style={{ maxHeight: '100vh' }}>
+    <div style={{ height: '100%', overflowY: 'auto', padding: '24px' }}>
       <div className="max-w-lg mx-auto">
         <div className="mb-8">
           <div className="inline-block tape-strip mb-3">

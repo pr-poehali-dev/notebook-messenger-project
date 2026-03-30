@@ -28,30 +28,52 @@ export default function MessengerApp({ user, onLogout }: Props) {
   const [selectedChatName, setSelectedChatName] = useState("");
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [totalUnread, setTotalUnread] = useState(0);
+  const [_showChatOnMobile, setShowChatOnMobile] = useState(false);
 
   const fetchUnread = useCallback(async () => {
-    const res = await api.messages.unreadCounts(user.token);
-    if (res.unread_counts) {
-      setUnreadCounts(res.unread_counts);
-      const total = Object.values(res.unread_counts as Record<string, number>).reduce((a, b) => a + b, 0);
-      setTotalUnread(total);
-      if (total > 0) {
-        document.title = `(${total}) NOTEBOOK`;
-        if (Notification.permission === "granted") {
-          new Notification("NOTEBOOK", { body: `${total} непрочитанных сообщений`, icon: "/favicon.svg" });
+    try {
+      const res = await api.messages.unreadCounts(user.token);
+      if (res.unread_counts) {
+        setUnreadCounts(res.unread_counts);
+        const total = Object.values(res.unread_counts as Record<string, number>).reduce((a, b) => a + b, 0);
+        setTotalUnread(total);
+        if (total > 0) {
+          document.title = `(${total}) NOTEBOOK`;
+        } else {
+          document.title = "NOTEBOOK";
         }
-      } else {
-        document.title = "NOTEBOOK";
       }
+    } catch {
+      // silent
     }
   }, [user.token]);
 
   useEffect(() => {
-    Notification.requestPermission();
+    // Запрашиваем разрешение на уведомления не блокируя UI
+    setTimeout(() => {
+      if (typeof Notification !== "undefined" && Notification.permission === "default") {
+        Notification.requestPermission().catch(() => {});
+      }
+    }, 2000);
+
     fetchUnread();
     const interval = setInterval(fetchUnread, 15000);
-    return () => { clearInterval(interval); document.title = "NOTEBOOK"; };
+    return () => {
+      clearInterval(interval);
+      document.title = "NOTEBOOK";
+    };
   }, [fetchUnread]);
+
+  const handleSelectChat = (id: number, name: string) => {
+    setSelectedChatId(id);
+    setSelectedChatName(name);
+    setShowChatOnMobile(true);
+  };
+
+  const handleBackFromChat = () => {
+    setShowChatOnMobile(false);
+    setSelectedChatId(null);
+  };
 
   const navItems: { id: Tab; label: string; icon: string }[] = [
     { id: "chats", label: "Чаты", icon: "MessageSquare" },
@@ -61,44 +83,79 @@ export default function MessengerApp({ user, onLogout }: Props) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row" style={{ background: 'var(--paper)' }}>
-      {/* Sidebar */}
-      <div className="w-full md:w-64 flex-shrink-0 border-r" style={{ borderColor: 'var(--rule-line)', background: 'var(--paper-dark)' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--paper)' }}>
+
+      {/* LEFT SIDEBAR — навигация */}
+      <div style={{
+        width: '200px',
+        flexShrink: 0,
+        borderRight: '1px solid var(--rule-line)',
+        background: 'var(--paper-dark)',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden',
+      }}>
         {/* Logo */}
-        <div className="p-4 border-b" style={{ borderColor: 'var(--rule-line)' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 flex items-center justify-center border-2" style={{ borderColor: 'var(--ink)', color: 'var(--ink)' }}>
-              <span className="ink-stamp text-xs">N</span>
+        <div style={{ padding: '16px 12px', borderBottom: '1px solid var(--rule-line)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '32px', height: '32px', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', border: '2px solid var(--ink)', flexShrink: 0
+            }}>
+              <span className="ink-stamp" style={{ fontSize: '12px', color: 'var(--ink)' }}>N</span>
             </div>
-            <div>
-              <div className="ink-stamp text-sm" style={{ color: 'var(--ink)' }}>NOTEBOOK</div>
-              <div className="typewriter text-xs" style={{ color: 'var(--ink-faded)' }}>{user.username}</div>
+            <div style={{ minWidth: 0 }}>
+              <div className="ink-stamp" style={{ fontSize: '13px', color: 'var(--ink)' }}>NOTEBOOK</div>
+              <div className="typewriter" style={{ fontSize: '11px', color: 'var(--ink-faded)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user.username}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Nav */}
-        <nav className="p-2">
+        {/* Nav items */}
+        <nav style={{ padding: '8px', flex: 1 }}>
           {navItems.map(item => (
             <button
               key={item.id}
-              onClick={() => { setActiveTab(item.id); if (item.id !== "chats") setSelectedChatId(null); }}
-              className={`sidebar-item w-full text-left flex items-center gap-3 rounded-sm ${activeTab === item.id ? "active" : ""}`}
-              style={{ color: 'var(--ink)' }}
+              onClick={() => {
+                setActiveTab(item.id);
+                if (item.id !== "chats") {
+                  setSelectedChatId(null);
+                  setShowChatOnMobile(false);
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                width: '100%',
+                textAlign: 'left',
+                padding: '8px 10px',
+                cursor: 'pointer',
+                background: activeTab === item.id ? 'rgba(44,31,14,0.12)' : 'transparent',
+                borderLeft: activeTab === item.id ? '3px solid var(--ink)' : '3px solid transparent',
+                borderTop: 'none',
+                borderRight: 'none',
+                borderBottom: '1px solid transparent',
+                color: 'var(--ink)',
+                transition: 'all 0.15s',
+              }}
             >
-              <Icon name={item.icon} size={16} />
-              <span className="typewriter text-sm">{item.label}</span>
+              <Icon name={item.icon} size={15} />
+              <span className="typewriter" style={{ fontSize: '13px' }}>{item.label}</span>
               {item.id === "notifications" && totalUnread > 0 && (
-                <span className="ml-auto unread-badge">{totalUnread}</span>
+                <span className="unread-badge" style={{ marginLeft: 'auto' }}>{totalUnread}</span>
               )}
             </button>
           ))}
         </nav>
 
-        {/* Privacy notice */}
-        <div className="p-4 mt-auto">
-          <div className="stamp-border text-center">
-            <p className="typewriter text-xs" style={{ color: 'var(--ink-very-faded)', lineHeight: '1.6' }}>
+        {/* Privacy badge */}
+        <div style={{ padding: '12px', borderTop: '1px solid var(--rule-line)' }}>
+          <div className="stamp-border" style={{ textAlign: 'center' }}>
+            <p className="typewriter" style={{ fontSize: '10px', color: 'var(--ink-very-faded)', lineHeight: '1.8' }}>
               🔒 IP скрыт<br />
               📡 Трафик защищён<br />
               ⏱ Чаты временные
@@ -107,50 +164,73 @@ export default function MessengerApp({ user, onLogout }: Props) {
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* MAIN CONTENT */}
+      <div style={{ flex: 1, display: 'flex', height: '100vh', overflow: 'hidden', minWidth: 0 }}>
+
         {activeTab === "chats" && (
           <>
-            <ChatList
-              user={user}
-              selectedChatId={selectedChatId}
-              onSelectChat={(id, name) => { setSelectedChatId(id); setSelectedChatName(name); }}
-              unreadCounts={unreadCounts}
-              onRefreshUnread={fetchUnread}
-            />
-            {selectedChatId ? (
-              <ChatWindow
+            {/* Chat list — скрыт на мобиле когда открыт чат */}
+            <div style={{
+              width: '260px',
+              flexShrink: 0,
+              borderRight: '1px solid var(--rule-line)',
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100vh',
+              overflow: 'hidden',
+            }}>
+              <ChatList
                 user={user}
-                chatId={selectedChatId}
-                chatName={selectedChatName}
-                onBack={() => setSelectedChatId(null)}
-                onNewMessage={fetchUnread}
+                selectedChatId={selectedChatId}
+                onSelectChat={handleSelectChat}
+                unreadCounts={unreadCounts}
+                onRefreshUnread={fetchUnread}
               />
-            ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center animate-fade-in">
-                  <div className="handwritten text-4xl mb-3" style={{ color: 'var(--ink-very-faded)' }}>
+            </div>
+
+            {/* Chat window or placeholder */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', minWidth: 0 }}>
+              {selectedChatId ? (
+                <ChatWindow
+                  user={user}
+                  chatId={selectedChatId}
+                  chatName={selectedChatName}
+                  onBack={handleBackFromChat}
+                  onNewMessage={fetchUnread}
+                />
+              ) : (
+                <div style={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexDirection: 'column', gap: '8px'
+                }}>
+                  <div className="handwritten" style={{ fontSize: '2rem', color: 'var(--ink-very-faded)' }}>
                     Выберите чат
                   </div>
-                  <p className="typewriter text-sm" style={{ color: 'var(--ink-very-faded)' }}>
-                    или создайте новый временный чат
+                  <p className="typewriter" style={{ fontSize: '13px', color: 'var(--ink-very-faded)' }}>
+                    или создайте новый временный чат →
                   </p>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </>
         )}
 
         {activeTab === "profile" && (
-          <ProfilePanel user={user} onLogout={onLogout} />
+          <div style={{ flex: 1, height: '100vh', overflow: 'auto' }}>
+            <ProfilePanel user={user} onLogout={onLogout} />
+          </div>
         )}
 
         {activeTab === "settings" && (
-          <SettingsPanel user={user} />
+          <div style={{ flex: 1, height: '100vh', overflow: 'auto' }}>
+            <SettingsPanel user={user} />
+          </div>
         )}
 
         {activeTab === "notifications" && (
-          <NotificationsPanel unreadCounts={unreadCounts} totalUnread={totalUnread} />
+          <div style={{ flex: 1, height: '100vh', overflow: 'auto' }}>
+            <NotificationsPanel unreadCounts={unreadCounts} totalUnread={totalUnread} />
+          </div>
         )}
       </div>
     </div>

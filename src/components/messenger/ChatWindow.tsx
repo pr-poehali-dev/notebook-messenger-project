@@ -99,36 +99,34 @@ export default function ChatWindow({ user, chatId, chatName, onBack, onNewMessag
   let lastDate = "";
 
   return (
-    <div className="flex-1 flex flex-col" style={{ maxHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <div className="p-3 border-b flex items-center gap-3" style={{ borderColor: 'var(--rule-line)', background: 'var(--paper-dark)' }}>
-        <button onClick={onBack} className="notebook-btn notebook-btn-outline p-1.5 md:hidden">
-          <Icon name="ArrowLeft" size={14} />
-        </button>
-        <div className="flex-1">
-          <div className="ink-stamp text-sm" style={{ color: 'var(--ink)' }}>{chatName}</div>
-          <div className="typewriter text-xs flex items-center gap-2" style={{ color: 'var(--ink-faded)' }}>
+      <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--rule-line)', background: 'var(--paper-dark)', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="ink-stamp" style={{ fontSize: '13px', color: 'var(--ink)' }}>{chatName}</div>
+          <div className="typewriter" style={{ fontSize: '11px', color: 'var(--ink-faded)', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Icon name="Clock" size={10} />
-            <span>Временный · исчезнет через 24ч с создания</span>
+            <span>Временный · исчезнет через 24ч</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="stamp-border hidden sm:block">
-            <span className="typewriter text-xs" style={{ color: 'var(--ink-very-faded)' }}>🔒 IP скрыт</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <div className="stamp-border">
+            <span className="typewriter" style={{ fontSize: '10px', color: 'var(--ink-very-faded)' }}>🔒 IP скрыт</span>
           </div>
           <button
             onClick={() => setShowInvite(true)}
-            className="notebook-btn flex items-center gap-1.5 text-xs"
+            className="notebook-btn"
+            style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px' }}
             title="Пригласить пользователя"
           >
-            <Icon name="UserPlus" size={13} />
-            <span className="hidden sm:inline">Пригласить</span>
+            <Icon name="UserPlus" size={12} />
+            Пригласить
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: 'var(--paper)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', background: 'var(--paper)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {loading && (
           <div className="text-center py-8">
             <span className="handwritten text-lg" style={{ color: 'var(--ink-faded)' }}>Загрузка...</span>
@@ -187,10 +185,10 @@ export default function ChatWindow({ user, chatId, chatName, onBack, onNewMessag
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t" style={{ borderColor: 'var(--rule-line)', background: 'var(--paper-dark)' }}>
-        <div className="flex gap-2 items-end">
+      <div style={{ padding: '10px 14px', borderTop: '1px solid var(--rule-line)', background: 'var(--paper-dark)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
           <textarea
-            className="notebook-input flex-1 resize-none text-sm"
+            className="notebook-input"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => {
@@ -201,13 +199,13 @@ export default function ChatWindow({ user, chatId, chatName, onBack, onNewMessag
             }}
             placeholder="Напишите сообщение... (Enter — отправить)"
             rows={2}
-            style={{ maxHeight: '120px' }}
+            style={{ flex: 1, resize: 'none', fontSize: '13px', maxHeight: '100px' }}
           />
           <button
             onClick={handleSend}
             disabled={sending || !input.trim()}
-            className="notebook-btn p-2 flex items-center gap-1"
-            style={{ opacity: !input.trim() ? 0.5 : 1 }}
+            className="notebook-btn"
+            style={{ padding: '6px 10px', opacity: !input.trim() ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             <Icon name="Send" size={14} />
           </button>

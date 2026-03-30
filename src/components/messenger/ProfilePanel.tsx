@@ -65,7 +65,7 @@ export default function ProfilePanel({ user, onLogout }: Props) {
   };
 
   return (
-    <div className="flex-1 p-6 overflow-y-auto" style={{ maxHeight: '100vh' }}>
+    <div style={{ height: '100%', overflowY: 'auto', padding: '24px' }}>
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="mb-8">

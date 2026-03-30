@@ -35,8 +35,12 @@ export default function ChatList({ user, selectedChatId, onSelectChat, unreadCou
 
   const loadChats = useCallback(async () => {
     setLoading(true);
-    const res = await api.chats.list(user.token);
-    if (res.chats) setChats(res.chats);
+    try {
+      const res = await api.chats.list(user.token);
+      if (res.chats) setChats(res.chats);
+    } catch {
+      // silent
+    }
     setLoading(false);
   }, [user.token]);
 
@@ -77,16 +81,17 @@ export default function ChatList({ user, selectedChatId, onSelectChat, unreadCou
   };
 
   return (
-    <div className="w-full md:w-72 flex-shrink-0 border-r flex flex-col" style={{ borderColor: 'var(--rule-line)', maxHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <div className="p-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--rule-line)' }}>
+      <div style={{ padding: '12px', borderBottom: '1px solid var(--rule-line)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div className="ink-stamp text-sm" style={{ color: 'var(--ink)' }}>ВРЕМЕННЫЕ ЧАТЫ</div>
-          <div className="typewriter text-xs" style={{ color: 'var(--ink-faded)' }}>удаляются через 24ч</div>
+          <div className="ink-stamp" style={{ fontSize: '12px', color: 'var(--ink)' }}>ВРЕМЕННЫЕ ЧАТЫ</div>
+          <div className="typewriter" style={{ fontSize: '11px', color: 'var(--ink-faded)' }}>удаляются через 24ч</div>
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
-          className="notebook-btn p-1.5 flex items-center gap-1"
+          className="notebook-btn"
+          style={{ padding: '4px 8px' }}
           title="Создать чат"
         >
           <Icon name="Plus" size={14} />
@@ -95,58 +100,69 @@ export default function ChatList({ user, selectedChatId, onSelectChat, unreadCou
 
       {/* Create chat form */}
       {showCreate && (
-        <div className="p-3 border-b animate-fade-in" style={{ borderColor: 'var(--rule-line)', background: 'rgba(44,31,14,0.04)' }}>
-          <label className="typewriter text-xs uppercase tracking-widest" style={{ color: 'var(--ink-faded)' }}>
+        <div style={{ padding: '12px', borderBottom: '1px solid var(--rule-line)', background: 'rgba(44,31,14,0.04)', flexShrink: 0 }} className="animate-fade-in">
+          <label className="typewriter" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-faded)' }}>
             Название чата
           </label>
           <input
-            className="notebook-input mt-1 text-sm"
+            className="notebook-input"
+            style={{ marginTop: '4px', fontSize: '13px' }}
             value={newChatName}
             onChange={e => setNewChatName(e.target.value)}
             placeholder="Введите название..."
             onKeyDown={e => e.key === 'Enter' && handleCreate()}
             autoFocus
           />
-          <div className="flex gap-2 mt-2">
-            <button className="notebook-btn notebook-btn-outline flex-1 text-xs" onClick={() => setShowCreate(false)}>Отмена</button>
-            <button className="notebook-btn flex-1 text-xs" onClick={handleCreate} disabled={creating}>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button className="notebook-btn notebook-btn-outline" style={{ flex: 1, fontSize: '12px' }} onClick={() => setShowCreate(false)}>Отмена</button>
+            <button className="notebook-btn" style={{ flex: 1, fontSize: '12px' }} onClick={handleCreate} disabled={creating}>
               {creating ? "..." : "Создать"}
             </button>
           </div>
         </div>
       )}
 
-      {/* Chat list */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Chat list — scrollable */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         {loading && chats.length === 0 && (
-          <div className="p-4 text-center">
-            <span className="handwritten text-sm" style={{ color: 'var(--ink-faded)' }}>Загрузка...</span>
+          <div style={{ padding: '24px', textAlign: 'center' }}>
+            <span className="handwritten" style={{ fontSize: '14px', color: 'var(--ink-faded)' }}>Загрузка...</span>
           </div>
         )}
         {!loading && chats.length === 0 && (
-          <div className="p-6 text-center">
-            <div className="handwritten text-lg mb-2" style={{ color: 'var(--ink-faded)' }}>Пусто</div>
-            <p className="typewriter text-xs" style={{ color: 'var(--ink-very-faded)' }}>Создайте первый временный чат</p>
+          <div style={{ padding: '32px 16px', textAlign: 'center' }}>
+            <div className="handwritten" style={{ fontSize: '18px', color: 'var(--ink-faded)', marginBottom: '6px' }}>Пусто</div>
+            <p className="typewriter" style={{ fontSize: '11px', color: 'var(--ink-very-faded)' }}>
+              Нажмите + чтобы создать<br />первый временный чат
+            </p>
           </div>
         )}
+
         {chats.map(chat => {
           const unread = unreadCounts[String(chat.id)] || 0;
+          const isSelected = selectedChatId === chat.id;
           return (
             <div
               key={chat.id}
               onClick={() => handleJoin(chat)}
-              className={`sidebar-item cursor-pointer ${selectedChatId === chat.id ? "active" : ""}`}
-              style={{ borderBottom: `1px solid var(--rule-line)` }}
+              style={{
+                padding: '10px 12px',
+                cursor: 'pointer',
+                borderBottom: '1px solid var(--rule-line)',
+                background: isSelected ? 'rgba(44,31,14,0.12)' : 'transparent',
+                borderLeft: isSelected ? '3px solid var(--ink)' : '3px solid transparent',
+                transition: 'all 0.1s',
+              }}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Icon name="Clock" size={12} style={{ color: 'var(--ink-very-faded)', flexShrink: 0 }} />
-                    <span className="typewriter text-sm font-bold truncate" style={{ color: 'var(--ink)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Icon name="Clock" size={11} style={{ color: 'var(--ink-very-faded)', flexShrink: 0 }} />
+                    <span className="typewriter" style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {chat.name}
                     </span>
                   </div>
-                  <div className="typewriter text-xs mt-0.5 flex items-center gap-2" style={{ color: 'var(--ink-very-faded)' }}>
+                  <div className="typewriter" style={{ fontSize: '11px', marginTop: '3px', color: 'var(--ink-very-faded)', display: 'flex', gap: '6px' }}>
                     <span>{chat.member_count} уч.</span>
                     <span>·</span>
                     <span style={{ color: unread > 0 ? 'var(--destructive, #8b2222)' : 'var(--ink-very-faded)' }}>
@@ -154,10 +170,10 @@ export default function ChatList({ user, selectedChatId, onSelectChat, unreadCou
                     </span>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
                   {unread > 0 && <span className="unread-badge">{unread}</span>}
                   {!chat.is_member && (
-                    <span className="typewriter text-xs" style={{ color: 'var(--ink-very-faded)' }}>войти</span>
+                    <span className="typewriter" style={{ fontSize: '10px', color: 'var(--ink-very-faded)' }}>войти</span>
                   )}
                 </div>
               </div>
@@ -166,14 +182,15 @@ export default function ChatList({ user, selectedChatId, onSelectChat, unreadCou
         })}
       </div>
 
-      {/* Refresh */}
-      <div className="p-2 border-t" style={{ borderColor: 'var(--rule-line)' }}>
+      {/* Refresh button */}
+      <div style={{ padding: '8px', borderTop: '1px solid var(--rule-line)', flexShrink: 0 }}>
         <button
           onClick={loadChats}
-          className="w-full notebook-btn notebook-btn-outline text-xs flex items-center justify-center gap-2"
+          className="notebook-btn notebook-btn-outline"
+          style={{ width: '100%', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
         >
-          <Icon name="RefreshCw" size={12} />
-          Обновить
+          <Icon name="RefreshCw" size={11} />
+          Обновить список
         </button>
       </div>
     </div>
