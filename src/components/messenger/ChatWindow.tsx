@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { api } from "@/lib/api";
 import Icon from "@/components/ui/icon";
+import InviteModal from "./InviteModal";
 
 interface Message {
   id: number;
@@ -32,6 +33,7 @@ export default function ChatWindow({ user, chatId, chatName, onBack, onNewMessag
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(0);
 
@@ -110,8 +112,18 @@ export default function ChatWindow({ user, chatId, chatName, onBack, onNewMessag
             <span>Временный · исчезнет через 24ч с создания</span>
           </div>
         </div>
-        <div className="stamp-border">
-          <span className="typewriter text-xs" style={{ color: 'var(--ink-very-faded)' }}>🔒 IP скрыт</span>
+        <div className="flex items-center gap-2">
+          <div className="stamp-border hidden sm:block">
+            <span className="typewriter text-xs" style={{ color: 'var(--ink-very-faded)' }}>🔒 IP скрыт</span>
+          </div>
+          <button
+            onClick={() => setShowInvite(true)}
+            className="notebook-btn flex items-center gap-1.5 text-xs"
+            title="Пригласить пользователя"
+          >
+            <Icon name="UserPlus" size={13} />
+            <span className="hidden sm:inline">Пригласить</span>
+          </button>
         </div>
       </div>
 
@@ -201,6 +213,16 @@ export default function ChatWindow({ user, chatId, chatName, onBack, onNewMessag
           </button>
         </div>
       </div>
+
+      {showInvite && (
+        <InviteModal
+          token={user.token}
+          chatId={chatId}
+          chatName={chatName}
+          currentUserId={user.user_id}
+          onClose={() => setShowInvite(false)}
+        />
+      )}
     </div>
   );
 }

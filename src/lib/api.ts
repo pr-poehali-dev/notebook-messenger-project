@@ -1,6 +1,7 @@
 const AUTH_URL = "https://functions.poehali.dev/ab3f775c-e587-423a-85ff-13c484227ac7";
 const CHATS_URL = "https://functions.poehali.dev/5c496716-4c3f-407d-960e-61721aa1d0e6";
 const MESSAGES_URL = "https://functions.poehali.dev/efef0460-b895-4dcb-8555-b5a8f6340626";
+const USERS_URL = "https://functions.poehali.dev/63bcd3df-aed3-4240-8ee0-46047dc0bf17";
 
 async function post(url: string, body: object) {
   const res = await fetch(url, {
@@ -45,5 +46,13 @@ export const api = {
       post(MESSAGES_URL, { action: "send", token, chat_id, content }),
     unreadCounts: (token: string) =>
       post(MESSAGES_URL, { action: "unread_counts", token }),
+  },
+  users: {
+    search: (token: string, query: string) =>
+      post(USERS_URL, { action: "search", token, query }),
+    inviteToChat: (token: string, chat_id: number, invite_user_id: number) =>
+      post(USERS_URL, { action: "invite_to_chat", token, chat_id, invite_user_id }),
+    chatMembers: (token: string, chat_id: number) =>
+      post(USERS_URL, { action: "chat_members", token, chat_id }),
   },
 };

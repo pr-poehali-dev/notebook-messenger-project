@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "Search without auth",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "search",
+        "token": "invalid_token",
+        "query": "тест"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
